@@ -1,0 +1,113 @@
+<!DOCTYPE html><!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]--><!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]--><!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]--><!--[if gt IE 8]><!--><html class=no-js><!--<![endif]--><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge"><title>JavaScript Promises | 4th JavaScript Meetup Luxembourg</title><meta name=description content=""><meta name=viewport content="width=device-width"><!-- Place favicon.ico and apple-touch-icon.png in the root directory --><link rel=stylesheet href=styles/vendor.css><link rel=stylesheet href=styles/6f05766c.main.css><body><!--[if lt IE 10]>
+      <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+    <![endif]--><div class=container><div class=row><div class=col-md-12><div class=jumbotron><h1>JavaScript Promises</h1><p>Patrick Beer - <a href=https://twitter.com/pabera>@pabera</a></p></div></div></div><div class=row><div class=col-md-12><h2>1. Why JavaScript Promises?</h2><p>Promises are a different way of handling asynchronous functionality and requests without using simple callback functions.</p><div class="panel panel-default"><div class=panel-heading>Some problems with the callback function approach</div><div class=panel-body><ul><li>Input and output are decoupled, the output callback needs to be passed as an input</li><li>Creating parallel operations is hard</li><li>When it comes to debugging, the stack trace does not provide all the information anymore we need</li></ul></div></div><div class="alert alert-success"><h4>What is a Promise?</h4>A promise represents the value that is the result of an asynchronous operation (Examples: general data/content, thrown errors).</div><h4>Specification - Promises/A+ spec</h4><p><ul><li><a href=http://promises-aplus.github.io/promises-spec>http://promises-aplus.github.io/promises-spec</a></li><li><a href=http://wiki.commonjs.org/wiki/Promises/A>http://wiki.commonjs.org/wiki/Promises/A</a></li></ul></p></div></div><div class=row><div class=col-md-12><h2>2. Basic Usage</h2><h4>Example 1</h4><pre>var promise = get('http://amazon.com');</pre><h4>Example 2</h4><pre>promise.done(function(evt) {
+  console.log(evt);
+});</pre><p><code>.done()</code> can be called as many times you want. It will always return the same once it has been called.</p><h4>Except a second function to handle errors</h4><pre>Promise.done(function(content) {}, function(error) {});</pre></div></div><div class=row><div class=col-md-12><h2>3. Conversion</h2><p>Chaining promises with <code>.then()</code>.</p><h4>Example 3</h4><pre>function getContent(url) {
+  return get(url)
+    .then(function (content) {
+      return content;
+    });
+}
+
+getContent('http://amazon.com').done(function (result) {
+  console.log(result)
+})</pre><p><code>.then()</code> also excepts an error argument</p><pre>.then( event, error )</pre><h4>Example 4</h4><pre>function getContent(url) {
+  return get(url)
+    .then(function (result) {
+      return result;
+    }, function (error) {
+      if (canRetry(error)) {
+        return getContent(url);
+      }
+      else {
+        throw error;
+      }
+    });
+}
+
+getContent('http://www.amazon.com').done(function (content) {
+  console.log(content);
+});</pre><h4>Use multiple <code>.then()</code> (Example 5)</h4><pre>var promise = get('http://www.amazon.com')
+  .then(function (url) {
+    return get(url);
+  })
+  .then(function (result) {
+    return result;
+  })
+promise.done(function (final) {
+  console.log(final);
+});</pre><h4>Mix it! (Example 6)</h4><pre>var a = get('http://www.amazon.com');
+var e = get('http://www.ebay.com');
+var both = Promise.all([a, e]);
+both.done(function (result) {
+  var a = result[0];
+  var e = result[1];
+  console.log({
+    'amazon': a,
+    'ebay': e
+  });
+});</pre><p>Useful if you need to run a lot of operations in parallel<br>Best example: <b>image file preloader</b></p><h4>Serialize it (Example 7)</h4><pre>get('http://www.amazon.com').then(function (result) {
+  console.log('amazon');
+  console.dir(result);
+  return get('http://www.ebay.com')
+}).done(function (result) {
+  console.log('ebay');
+  console.dir(result);
+});</pre></div></div><div class=row><div class=col-md-12><h2>3. Implementations</h2><h4>Node</h4><pre>npm install promise</pre><p>Usage</p><pre>var Promise = require('promise')</pre><p>There are some browser implementations as well</p><div class="panel panel-default"><div class=panel-heading>Some browser implementations</div><div class=panel-body><ul><li><a href=https://github.com/kriskowal/q>Q</a></li><li><a href=https://github.com/cujojs/when>when</a></li><li><a href=http://msdn.microsoft.com/en-us/library/windows/apps/br211867.aspx>WinJS</a></li><li><a href=https://github.com/tildeio/rsvp.js>RSVP.js</a></li><li>jQuery Deferreds</li></ul></div></div></div></div><div class=row><div class=col-md-12><h2>4. Some theory</h2><div class="panel panel-default"><div class=panel-heading>Promise States</div><div class=panel-body><table class=table><tr><td><b>fulfilled</b></td><td>The promise related action has successfully been terminated</td><tr><td><b>succeeded rejected</b></td><td><code>goto fail;</code></td><tr><td><b>failed pending</b></td><td>Hasn't fulfilled or rejected yet</td><tr><td><b>yet settled</b></td><td>Has fulfilled or rejected</td></table></div></div></div></div><div class=row><div class=col-md-12><h2>5. Practical Example</h2><p>Standard asynchronous callback paradigm</p><h4>Simple Example</h4><pre>object.save({ key: value }, {
+  success: function(object) {
+    // the object was saved.
+  },
+  error: function(object, error) {
+    // saving the object failed.
+  }
+});</pre><p>We can do it like this with promises.</p><pre>object.save({ key: value }).then(
+  function(object) {
+    // the object was saved.
+  },
+  function(error) {
+    // saving the object failed.
+  });</pre><div class="alert alert-info">Why is that better now?</div><h4>Advanced Example</h4><p>Callbacks</p><pre>Parse.User.logIn("user", "pass", {
+  success: function(user) {
+    query.find({
+      success: function(results) {
+        results[0].save({ key: value }, {
+          success: function(result) {
+            // the object was saved.
+          }
+        });
+      }
+    });
+  }
+});</pre><p>Promises</p><pre>Parse.User.logIn("user", "pass").then(function(user) {
+  return query.find();
+}).then(function(results) {
+  return results[0].save({ key: value });
+}).then(function(result) {
+  // the object was saved.
+});</pre><p>Error Handling</p><pre>Parse.User.logIn("user", "pass").then(function(user) {
+  return query.find();
+}).then(function(results) {
+  return results[0].save({ key: value });
+}).then(function(result) {
+  // the object was saved.
+}, function(error) {
+  // there was some error.
+});</pre><h4>Basic Implementation of a Promise</h4><p>Create the promise</p><pre>var promise = new Promise(function(res, rej) {
+  // Code something great
+
+  if (true) {
+    areWeDone(true);
+  }
+  else {
+    areWeDone(false);
+  }
+});</pre><p>Use it</p><pre>promise.then(function(result) {
+  console.log(result); // "areWeDone(true)"
+}, function(err) {
+  console.log(err); // Error: "areWeDone(false)"
+});</pre></div></div><div class=row><div class=col-md-12><h4>Sources</h4><ul><li>https://github.com/then/promise</li><li>http://www.html5rocks.com/en/tutorials/es6/promises/?redirect_from_locale=cs</li><li>http://blog.parse.com/2013/01/29/whats-so-great-about-javascript-promises/</li><li>http://www.promisejs.org/intro/</li><li>http://mattgreer.org/articles/promises-in-wicked-detail/</li></ul></div></div></div><script src=scripts/bb218a37.vendor.js></script><!-- Google Analytics: change UA-XXXXX-X to be your site's ID. --><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+      function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+      e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+      e.src='//www.google-analytics.com/analytics.js';
+      r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+      ga('create','UA-XXXXX-X');ga('send','pageview');</script><script src=scripts/aaf74903.plugins.js></script><script src=scripts/b6c3df09.main.js></script>
